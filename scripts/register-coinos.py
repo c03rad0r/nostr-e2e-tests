@@ -2,40 +2,33 @@
 """
 Register Nostr shop identities on CoinOS to get Lightning addresses.
 
+Zero external dependencies — uses stdlib only (urllib, json).
+
 Usage:
     python3 register-coinos.py
     python3 register-coinos.py --shop trade
+    python3 register-coinos.py --verify-only
     python3 register-coinos.py --username customname --pubkey <hex> --password <pass>
 
-This script registers accounts on coinos.io and returns Lightning addresses
-(lud16) that work with Plebeian Market for receiving Lightning payments.
+Registers accounts on coinos.io via POST /api/register. Returns Lightning
+addresses (lud16) that work with Plebeian Market for receiving payments.
 
-No captcha required. No manual account creation. No Lightning node needed.
+No captcha. No manual account creation. No Lightning node needed.
 
-Requirements:
-    pip install requests
-
-Credentials are stored in KeePass at:
+Credentials stored in KeePass:
     ~/.hermes/profiles/manager/secrets/nostr-shops.kdbx
     Group: "CoinOS"
 """
 
 import argparse
 import json
-import os
 import sys
-from pathlib import Path
-
-try:
-    import requests
-except ImportError:
-    print("ERROR: pip install requests", file=sys.stderr)
-    sys.exit(1)
+import urllib.request
+import urllib.error
 
 COINOS_API = "https://coinos.io/api/register"
 COINOS_LNURL_CHECK = "https://coinos.io/.well-known/lnurlp/{username}"
 
-# Default shop identities (pubkeys from KeePass)
 DEFAULT_SHOPS = [
     {
         "username": "sovrnoptics",
@@ -68,39 +61,43 @@ DEFAULT_SHOPS = [
 ]
 
 
-def register_shop(username: str, password: str, pubkey: str) -> dict:
-    payload = {
+def register_shop(username, password, pubkey):
+    payload = json.dumps({
         "user": {
             "username": username,
             "password": password,
             "pubkey": pubkey,
             "fresh": True,
         }
-    }
-    resp = requests.post(
-        COINOS_API,
-        json=payload,
+    }).encode()
+    req = urllib.request.Request(
+        COINOS_API, data=payload,
         headers={"Content-Type": "application/json"},
-        timeout=15,
     )
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        return {"error": f"HTTP {resp.status_code}: {resp.text[:200]}"}
+    try:
+        resp = urllib.request.urlopen(req, timeout=15)
+        return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()[:200]
+        return {"error": f"HTTP {e.code}: {body}"}
+    except Exception as e:
+        return {"error": str(e)}
 
 
-def verify_lnurl(username: str) -> bool:
+def verify_lnurl(username):
     url = COINOS_LNURL_CHECK.format(username=username)
     try:
-        resp = requests.get(url, timeout=10)
-        data = resp.json()
+        resp = urllib.request.urlopen(url, timeout=10)
+        data = json.loads(resp.read())
         return data.get("tag") == "payRequest"
     except Exception:
         return False
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Register Nostr shops on CoinOS")
+    parser = argparse.ArgumentParser(
+        description="Register Nostr shops on CoinOS for Lightning addresses"
+    )
     parser.add_argument("--shop", choices=["optics", "trade", "guides", "engineering"],
                         help="Register only one shop")
     parser.add_argument("--username", help="Custom username")
@@ -123,35 +120,33 @@ def main():
     else:
         shops = DEFAULT_SHOPS
 
-    print(f"{'Shop':<25} {'Lightning Address':<35} {'LNURL':<8}")
-    print("-" * 70)
+    print(f"{'Shop':<25} {'Lightning Address':<35} {'Status':<20}")
+    print("-" * 82)
 
     for shop in shops:
         ln_addr = f"{shop['username']}@coinos.io"
 
         if args.verify_only:
             ok = verify_lnurl(shop["username"])
-            print(f"{shop['name']:<25} {ln_addr:<35} {'OK' if ok else 'FAIL':<8}")
-            continue
-
-        result = register_shop(
-            shop["username"], shop["password"], shop["pubkey"]
-        )
-
-        if "error" in result:
-            if "taken" in str(result["error"]).lower():
-                ok = verify_lnurl(shop["username"])
-                status = "EXISTS+OK" if ok else "EXISTS+FAIL"
-            else:
-                status = f"ERROR: {result['error'][:40]}"
+            status = "OK" if ok else "FAIL"
         else:
-            ok = verify_lnurl(shop["username"])
-            status = "OK" if ok else "REGISTERED+LNURL_FAIL"
+            result = register_shop(
+                shop["username"], shop["password"], shop["pubkey"]
+            )
+            if "error" in result:
+                if "taken" in str(result["error"]).lower():
+                    ok = verify_lnurl(shop["username"])
+                    status = "EXISTS+OK" if ok else "EXISTS+FAIL"
+                else:
+                    status = f"ERROR: {result['error'][:40]}"
+            else:
+                ok = verify_lnurl(shop["username"])
+                status = "OK" if ok else "REGISTERED+LNURL_FAIL"
 
-        print(f"{shop['name']:<25} {ln_addr:<35} {status:<8}")
+        print(f"{shop['name']:<25} {ln_addr:<35} {status:<20}")
 
     print()
-    print("To update Nostr profiles with these lud16 addresses:")
+    print("Update Nostr profiles with these lud16 addresses:")
     print('  nak event -k 0 --content \'{"lud16":"USERNAME@coinos.io",...}\' --sec <nsec> <relays>')
 
 
