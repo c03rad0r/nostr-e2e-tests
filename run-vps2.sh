@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # VPS2 Runner — Deploys and runs E2E tests from Dallas TX IP
 # Usage: ./run-vps2.sh
-# Prereqs: SSH key for c03rad0r@23.182.128.51 must be authorized
+# Prereqs: SSH key for debian@23.182.128.51 must be authorized
 
 set -euo pipefail
 
-VPS2_HOST="c03rad0r@23.182.128.51"
+VPS2_HOST="debian@23.182.128.51"
 VPS2_DIR="nostr-e2e"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
