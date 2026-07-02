@@ -1,0 +1,23 @@
+# Secrets — NEVER commit
+secrets/
+*.env
+*.kdbx
+*_nsec*
+*_keypair*
+keypairs.*
+
+# Dependencies
+node_modules/
+
+# Test artifacts
+test-results/
+screenshots/
+videos/
+reports/
+vps2-results/
+*.webm
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
