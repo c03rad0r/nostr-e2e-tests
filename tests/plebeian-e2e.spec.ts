@@ -45,7 +45,7 @@ test('TC1 — Homepage loads correctly', async ({ page }) => {
   // Footer
   await expect(page.locator('footer, [role="contentinfo"]')).toBeVisible({ timeout: 10_000 })
 
-  await page.screenshot({ path: './screenshots/tc1-homepage.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc1-homepage.png' })
 })
 
 // TC2 — Buyer authenticates via localStorage nsec injection
@@ -67,7 +67,7 @@ test('TC2 — Buyer login via nsec injection', async ({ page }) => {
   const btnCount = await headerButtons.count()
   expect(btnCount).toBeGreaterThan(0)
 
-  await page.screenshot({ path: './screenshots/tc2-logged-in.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc2-logged-in.png',  })
 })
 
 // TC3 — Products page loads and shows listings
@@ -86,7 +86,7 @@ test('TC3 — Products page shows listings', async ({ page }) => {
   // Also check for any product-related content
   const productsHeading = page.locator('h1:has-text("Products"), h2:has-text("Products")')
 
-  await page.screenshot({ path: './screenshots/tc3-products.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc3-products.png',  })
 
   console.log(`Found ${productCount} product links on /products page`)
 })
@@ -104,19 +104,19 @@ test('TC4 — Search for products via searchbox', async ({ page }) => {
   await searchbox.fill('saffron')
   await page.waitForTimeout(5000) // Wait for search results
 
-  await page.screenshot({ path: './screenshots/tc4-search-saffron.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc4-search-saffron.png',  })
 
   // Clear and try another search
   await searchbox.fill('glasses')
   await page.waitForTimeout(5000)
 
-  await page.screenshot({ path: './screenshots/tc4-search-glasses.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc4-search-glasses.png',  })
 
   // Clear and search for guide
   await searchbox.fill('guide')
   await page.waitForTimeout(5000)
 
-  await page.screenshot({ path: './screenshots/tc4-search-guide.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc4-search-guide.png',  })
 
   console.log('Search tests complete — check screenshots for results')
 })
@@ -146,11 +146,11 @@ test('TC5 — Product interaction (click into detail)', async ({ page }) => {
     )
     const hasBuyButton = await buyButton.isVisible({ timeout: 5_000 }).catch(() => false)
 
-    await page.screenshot({ path: './screenshots/tc5-product-detail.png', fullPage: true })
+    await page.screenshot({ path: 'screenshots/tc5-product-detail.png',  })
     console.log(`Product detail page loaded, buy button visible: ${hasBuyButton}`)
   } else {
     console.log('No products found on /products — they may still be loading from relays')
-    await page.screenshot({ path: './screenshots/tc5-no-products.png', fullPage: true })
+    await page.screenshot({ path: 'screenshots/tc5-no-products.png',  })
   }
 })
 
@@ -188,7 +188,7 @@ test('TC6 — Add to cart and reach checkout', async ({ page }) => {
   await page.goto(`${TEST_URL}/checkout`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(3000)
 
-  await page.screenshot({ path: './screenshots/tc6-checkout.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc6-checkout.png',  })
   console.log(`Checkout URL: ${page.url()}`)
 })
 
@@ -209,7 +209,7 @@ test('TC7 — App connects to Nostr relays', async ({ page }) => {
   expect(config.appPublicKey).toBeTruthy()
 
   await page.waitForTimeout(5000)
-  await page.screenshot({ path: './screenshots/tc7-relay-connected.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc7-relay-connected.png',  })
 })
 
 // TC8 — Buyer 2 full journey with fresh identity
@@ -225,17 +225,17 @@ test('TC8 — Buyer 2 full journey', async ({ page }) => {
   // Browse products
   await page.goto(`${TEST_URL}/products`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(8000)
-  await page.screenshot({ path: './screenshots/tc8-buyer2-products.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc8-buyer2-products.png',  })
 
   // Browse auctions
   await page.goto(`${TEST_URL}/auctions`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(3000)
-  await page.screenshot({ path: './screenshots/tc8-buyer2-auctions.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc8-buyer2-auctions.png',  })
 
   // Browse community
   await page.goto(`${TEST_URL}/community`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(3000)
-  await page.screenshot({ path: './screenshots/tc8-buyer2-community.png', fullPage: true })
+  await page.screenshot({ path: 'screenshots/tc8-buyer2-community.png',  })
 
   console.log('Buyer 2 journey complete')
 })
