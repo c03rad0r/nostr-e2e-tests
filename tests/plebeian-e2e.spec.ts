@@ -214,8 +214,12 @@ test('TC7 — App connects to Nostr relays', async ({ page }) => {
 
 // TC8 — Buyer 2 full journey with fresh identity
 test('TC8 — Buyer 2 full journey', async ({ page }) => {
+  // Bump per-test timeout: this test navigates 4 pages (home → products →
+  // auctions → community). The community page loads slowly from relays, so the
+  // global 60s timeout is too tight. 180s gives headroom for all four navs.
+  test.setTimeout(180_000)
   await injectNostrAuth(page, BUYERS.buyer2)
-  await page.goto(TEST_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+  await page.goto(TEST_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 })
   await page.waitForTimeout(3000)
 
   // Verify logged in
@@ -232,8 +236,9 @@ test('TC8 — Buyer 2 full journey', async ({ page }) => {
   await page.waitForTimeout(3000)
   await page.screenshot({ path: 'screenshots/tc8-buyer2-auctions.png',  })
 
-  // Browse community
-  await page.goto(`${TEST_URL}/community`, { waitUntil: 'domcontentloaded' })
+  // Browse community — this page loads slowly (heavy relay aggregation).
+  // Allow up to 60s for navigation; see kanban t_3e59d70c + ADR-015.
+  await page.goto(`${TEST_URL}/community`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
   await page.waitForTimeout(3000)
   await page.screenshot({ path: 'screenshots/tc8-buyer2-community.png',  })
 
